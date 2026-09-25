@@ -67,6 +67,19 @@ router.post("/", (req,res) => {
     const {name,price} = req.body;
 
 
+    if(!name || price ==undefined)
+    {
+        return res.status(400).json({
+            message: "Name and price are required"
+        });
+    }
+
+    if(price<=0){
+        return res.status(400).json({
+            message: "Price must be a greater than 0"
+        });
+    }
+
     const newProduct = {
             id: products.length +1,
             name: name,
@@ -76,6 +89,107 @@ router.post("/", (req,res) => {
         products.push(newProduct);
         res.status(201).json(newProduct);
     });
+
+
+
+
+router.put("/:id", (req,res) =>{
+    const id = Number(req.params.id);
+
+    const  product = products.find((product) => product.id === id);
+
+    if(!product){
+        return res.status(404).json({
+            message: "Product not found"
+        });
+}
+
+const {name,price} = req.body;
+
+if(!name || price === undefined)
+{
+    return res.status(400).json({
+        message: "Name and price are required"
+    });
+}
+
+if(price <=0){
+    return res.status(400).json({
+        message: "Price must be greater than 0"
+    });
+}
+
+product.name=name;
+product.price=price;
+
+res.json(product);
+
+});
+
+
+
+
+router.patch("/:id", (req,res) => {
+    const id = Number(req.params.id);
+    const product = products.find((product) => product.id === id);
+
+    if(!product) {
+        return res.status(404).json({
+            message: "Product not found"
+        });
+    }
+
+    const {name,price} = req.body;
+
+    if(name !== undefined && name==="")
+    {
+        return res.status(400).json({
+            message: "Name cannot be empty"
+        });
+    }
+
+    if(price !== undefined && price<=0)
+    {
+        return res.status(400).json({
+            message: "Price must be greater than 0"
+        });
+    }
+
+
+
+    if(name !==undefined){
+        product.name = name;
+    }
+
+    if(price !==undefined)
+    {
+        product.price = price;
+    }
+
+    res.json(product);
+
+});
+
+router.delete("/:id",(req,res) => {
+  
+    const id = Number(req.params.id);
+
+    const productIndex = products.findIndex(
+        (product) => product.id ===id
+    );
+
+    if(productIndex === -1)
+    {
+        return res.status(404).json({
+            message: "Product not found"
+        });
+    }
+
+    products.splice(productIndex, 1);
+    res.json({
+        message: "Product deleted successfully"
+    });
+});
 
 module.exports = router;
 
