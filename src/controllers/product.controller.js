@@ -124,7 +124,67 @@ const updateProduct = (req,res) =>{
 }
 
 const updateProductPartial = (req,res) => {
+    const id = Number(req.params.id);
 
+    const product = products.find(
+        (product) => product.id === id
+    );
+
+    if(!product)
+    {
+        return res.status(404).json({
+            message: "product not found"
+        });
+    }
+    const {name,price} =req.body;
+
+    if(name !==undefined && name==="")
+    {
+        return res.status(400).json({
+            message:"Name cannot be empty"
+        });
+    }
+
+    if(price !==undefined && price<=0)
+    {
+        return res.status(400).json({
+             message: "Price must be greater than 0"
+        });
+    }
+
+    if(name !==undefined)
+    {
+        product.name=name;
+    }
+
+    if(price!==undefined)
+    {
+        product.price=price;
+    }
+
+    res.json(product);
+};
+
+const deleteProduct = (req,res) => {
+
+    const id = Number(req.params.id);
+
+    const productIndex = products.findIndex(
+        (product) => product.id === id
+    );
+
+    if(productIndex === -1)
+    {
+        return res.status(404).json({
+            message: "Products not found"
+        });
+    }
+
+    products.splice(productIndex, 1);
+
+    res.json({
+        message: "Product deleted successfully"
+    });
 };
 
 module.exports = {
@@ -132,5 +192,6 @@ module.exports = {
     getProductById,
     createProduct,
     updateProduct,
-    updateProductPartial
+    updateProductPartial,
+    deleteProduct
 };
