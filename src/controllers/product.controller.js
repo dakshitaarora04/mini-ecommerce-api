@@ -1,5 +1,6 @@
-const products = require("../data/products");
+// const products = require("../data/products");
 
+const Product = require("../models/product.model");
 
 // const products = [{
 //     id: 1,
@@ -13,43 +14,55 @@ const products = require("../data/products");
 // }
 // ];
 
-const getProducts = (req,res) =>{
+// const getProducts = (req,res) =>{
 
-    const { name, minPrice, maxPrice}  = req.query;
-    let filteredProducts = products;
+//     const { name, minPrice, maxPrice}  = req.query;
+//     let filteredProducts = products;
 
-    if(name) {
-        filteredProducts = filteredProducts.filter(
-            (product) => product.name.toLowerCase() === name.toLowerCase()
-        );
-    }
+//     if(name) {
+//         filteredProducts = filteredProducts.filter(
+//             (product) => product.name.toLowerCase() === name.toLowerCase()
+//         );
+//     }
 
-        if(minPrice) {
-            filteredProducts = filteredProducts.filter(
-                (product) => product.price >= Number(minPrice)
-            );
-        }
+//         if(minPrice) {
+//             filteredProducts = filteredProducts.filter(
+//                 (product) => product.price >= Number(minPrice)
+//             );
+//         }
 
-        if(maxPrice){
-            filteredProducts = filteredProducts.filter(
-                (product) => product.price <=Number(maxPrice)
-            );
-        }
+//         if(maxPrice){
+//             filteredProducts = filteredProducts.filter(
+//                 (product) => product.price <=Number(maxPrice)
+//             );
+//         }
     
         
     
 
-    res.json(filteredProducts);
+//     res.json(filteredProducts);
+// };
+
+const getProducts = async (req,res) => {
+    try{
+        const products = await Product.find();
+
+        res.json(products);
+    }
+    catch(error){
+        res.status(500).json({
+            message: "failed to fetch products"
+        });
+    }
 };
 
 
-const getProductById = (req,res)=>{
-    const id = Number(req.params.id);
+const getProductById = async(req,res)=>{
+    try{
+ // const id = Number(req.params.id);
 
-    const product = products.find(
-        (product)=> product.id ===id
-    );
-    
+    const product = await Product.findById(req.params.id);
+        
     if(!product)
     {
         return res.status(404).json({
@@ -61,8 +74,17 @@ const getProductById = (req,res)=>{
 
 }
 
-const createProduct = (req,res) =>{
-    const { name, price } = req.body;
+catch(error){
+    res.status(500).json({
+        message: "Failed to fetch product"
+    });
+}
+    };
+   
+
+const createProduct = async (req,res) =>{
+   try{
+const { name, price } = req.body;
 
     if(!name || price === undefined)
     {
@@ -76,33 +98,27 @@ const createProduct = (req,res) =>{
             message: "Price must be greater than 0"
         });
     }
-    const newProduct = {
-        id: products.length + 1,
-        name: name,
-        price: price
-    };
-
-    products.push(newProduct);
+    const newProduct = await Product.create({
+       name,
+       price
+    });
 
     res.status(201).json(newProduct);
+
+   }  
+   catch(error)
+   {
+    res.status(500).json({
+        message: "Failed to create product"
+    });
+   }
 };
 
-const updateProduct = (req,res) =>{
 
-    const id= Number(req.params.id);
+const updateProduct = async(req,res) =>{
 
-    const product = products.find(
-        (product) => product.id ===id
-    );
-
-    if(!product)
-    {
-        return res.status(404).json({
-            message: "Product not found"
-        });
-    }
-
-    const {name,price} = req.body;
+    try{
+         const {name,price} = req.body;
 
     if(!name || price === undefined)
     {
@@ -116,27 +132,40 @@ const updateProduct = (req,res) =>{
             message: "Price must be greater than 0"
         });
     }
-    product.name=name;
-    product.price=price;
-
-    res.json(product);
-
-}
-
-const updateProductPartial = (req,res) => {
-    const id = Number(req.params.id);
-
-    const product = products.find(
-        (product) => product.id === id
+    const product = await Product.findByIdAndUpdate(
+        req.params.id,
+        {
+            name,
+            price
+        },
+        {
+            new:true,
+            runValidators: true
+        }
     );
-
     if(!product)
     {
         return res.status(404).json({
-            message: "product not found"
+            message: "Product not found"
+        });
+  
+    }
+    res.json(product);
+    }
+
+    catch(error) {
+        res.status(500).json({
+            message: "Failed to update product"
         });
     }
-    const {name,price} =req.body;
+    
+};
+
+const updateProductPartial = async(req,res) => {
+
+    try{
+        
+    const {name,price} = req.body;
 
     if(name !==undefined && name==="")
     {
@@ -152,39 +181,65 @@ const updateProductPartial = (req,res) => {
         });
     }
 
-    if(name !==undefined)
-    {
-        product.name=name;
-    }
-
-    if(price!==undefined)
-    {
-        product.price=price;
-    }
-
-    res.json(product);
-};
-
-const deleteProduct = (req,res) => {
-
-    const id = Number(req.params.id);
-
-    const productIndex = products.findIndex(
-        (product) => product.id === id
+    const product = await Product.findByIdAndUpdate(
+        req.params.id,
+        {
+            ...(name !== undefined && {name}),
+            ...(price !==undefined && {price})
+        },
+        {
+            new: true,
+            runValidators: true
+        }
     );
 
-    if(productIndex === -1)
+    if(!product)
     {
         return res.status(404).json({
-            message: "Products not found"
+            message: "Product not found"
         });
     }
 
-    products.splice(productIndex, 1);
+    res.json(product);
+
+    }
+
+    catch(error)
+    {
+        res.status(500).json({
+            message: "Failed to update product"
+        });
+    }
+    
+};
+
+const deleteProduct = async (req,res) => {
+
+    try{
+      
+        const product = await Product.findByIdAndDelete(req.params.id);
+        if(!product)
+        {
+            return res.status(404).json({
+                message:"Product not found"
+            });
+        }
+
 
     res.json({
-        message: "Product deleted successfully"
+        message: "Product deleted successfully",
+        product
     });
+
+    }
+    catch(error){
+
+         res.status(500).json({
+            message: "Failed to delete product"
+        });
+    }
+
+   
 };
 
 module.exports = {
