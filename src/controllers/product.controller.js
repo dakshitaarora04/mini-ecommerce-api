@@ -1,66 +1,30 @@
 // const products = require("../data/products");
 
 const Product = require("../models/product.model");
+const AppError = require("../utils/AppError");
 
-// const products = [{
-//     id: 1,
-//     name: "Laptop",
-//     price: 50000
-// },
-// {
-//     id:2,
-//     name: "Mouse",
-//     price:1000
-// }
-// ];
-
-// const getProducts = (req,res) =>{
-
-//     const { name, minPrice, maxPrice}  = req.query;
-//     let filteredProducts = products;
-
-//     if(name) {
-//         filteredProducts = filteredProducts.filter(
-//             (product) => product.name.toLowerCase() === name.toLowerCase()
-//         );
-//     }
-
-//         if(minPrice) {
-//             filteredProducts = filteredProducts.filter(
-//                 (product) => product.price >= Number(minPrice)
-//             );
-//         }
-
-//         if(maxPrice){
-//             filteredProducts = filteredProducts.filter(
-//                 (product) => product.price <=Number(maxPrice)
-//             );
-//         }
-    
-        
-    
-
-//     res.json(filteredProducts);
-// };
-
-const getProducts = async (req,res) => {
+const getProducts = async (req,res,next) => {
     try{
 
         const {name, minPrice, maxPrice, page=1, limit = 10} = req.query;
 
         if(isNaN(Number(page)) || Number(page)<1)
         {
-            return res.status(400).json({
-                message:"page must be a positive number"
-            });
+          
+            return next(
+                new AppError("page must be a positive number", 400)
+            );
+            
         }
 
     
         if(isNaN(Number(limit)) || Number(limit)<1)
         {
-            return res.status(400).json({
-                message:"limit must be a positive number"
-            });
+            
+            return next(
+                new AppError("limit must be a positive number ",400)
+            );
+            
         }
         const skip = (Number(page) - 1) * Number(limit);
 
@@ -68,16 +32,18 @@ const getProducts = async (req,res) => {
 
         if(minPrice !== undefined && isNaN(Number(minPrice)))
         {
-            return res.status(400).json({
-                message:"minPrice must be a valid number"
-            });
+            return next(
+                new AppError("minPrice must be a valid number",400)
+            );
         }
 
         if(maxPrice !== undefined && isNaN(Number(maxPrice)))
         {
-            return res.status(400).json({
-                message:"maxPrice must be a valid number"
-            });
+
+            return next(
+                new AppError("maxPrice must be a valid number",400)
+            );
+            
         }
 
         if(name !==undefined)
@@ -94,9 +60,10 @@ const getProducts = async (req,res) => {
             Number(minPrice) > Number(maxPrice)
         )
         {
-            return res.status(400).json({
-                message: "minPrice cannot be greater than maxPrice"
-            });
+           
+            return next(
+                new AppError("minPrice cannot be greater than maxPrice",400)
+            );
         }
 
         if(minPrice !== undefined)
@@ -130,9 +97,7 @@ const getProducts = async (req,res) => {
         });
     }
     catch(error){
-        res.status(500).json({
-            message: "failed to fetch products"
-        });
+        next(error);
     }
 };
 
@@ -145,9 +110,7 @@ const getProductById = async(req,res,next)=>{
         
     if(!product)
     {
-        return res.status(404).json({
-            message: "Product not found"
-        });
+        return next(new AppError("Product not found",404));
     }
 
     res.json(product);

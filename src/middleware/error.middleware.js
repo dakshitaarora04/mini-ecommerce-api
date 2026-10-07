@@ -15,8 +15,10 @@ const errorMiddleware = (error, req, res, next) => {
         });
     }
 
-    res.status(500).json({
-        message:"Something went wrong"
+    const statusCode = error.statusCode || 500;
+
+    res.status(statusCode).json({
+        message: error.message ||"Something went wrong"
     });
 };
 module.exports = errorMiddleware;
